@@ -3,95 +3,20 @@
 from PIL import Image, ImageDraw, ImageFont
 import math
 import random
+import sys
 
-
-class CustomRow:
-	__MAX = 100000
-
-	__i = None
-	
-	def __init__(self):
-		self.__i = 0
-
-	def __iter__(self):
-		self.__i = 0
-		return self
-
-	def __next__(self):
-		while(True):
-			self.__i += 1
-			#print(self.__i)
-			bOol = miller_rabin(self.__i, 40)
-			if(bOol == True):
-				break
-		if(self.__i < self.__MAX):
-			return self.__i
-		else:
-			raise StopIteration
-
-
-'''
-class CustomRow:
-	__MAX = 100000
-
-	__i = None
-	
-	def __init__(self):
-		self.__i = 0
-
-	def __iter__(self):
-		self.__i = 0
-		return self
-
-	def __next__(self):
-		self.__i += 1
-		if(self.__i < self.__MAX):
-			return self.__i
-		else:
-			raise StopIteration
-'''
-
-def miller_rabin(n, k):
-
-    if(n == 1 or n == 2 or n == 3):
-        return True
-	# https://gist.github.com/Ayrx/5884790
-    # Implementation uses the Miller-Rabin Primality Test
-    # The optimal number of rounds for this test is 40
-    # See http://stackoverflow.com/questions/6325576/how-many-iterations-of-rabin-miller-should-i-use-for-cryptographic-safe-primes
-    # for justification
-
-    # If number is even, it's a composite number
-
-    if n == 2:
-        return True
-
-    if n % 2 == 0:
-        return False
-
-    r, s = 0, n - 1
-    while s % 2 == 0:
-        r += 1
-        s //= 2
-    for _ in range(k):
-        a = random.randrange(2, n - 1)
-        x = pow(a, s, n)
-        if x == 1 or x == n - 1:
-            continue
-        for _ in range(r - 1):
-            x = pow(x, 2, n)
-            if x == n - 1:
-                break
-        else:
-            return False
-    return True
+from custom_row.CustomRow import CustomRow
 
 imgSize = (15000, 10000)
 scale = 10
+MIN = 1
+MAX = 10000
+fontSize = 11
+outFileName = "out.png"
 backgroundColor = (0, 0, 0)
 NumColor = (0, 255, 0)
 
-fnt = ImageFont.truetype("./font/font.ttf", 10)
+fnt = ImageFont.truetype("./font/font.ttf", fontSize)
 
 pi2 = 2*math.pi
 
@@ -126,16 +51,85 @@ def drawStar(next_num : int, d : "ImageDraw.Draw", centerrr : tuple):
 	toDraw = (centerrr[0]+int(x_draw/scale+0.5), centerrr[1]-int(y_draw/scale+0.5))
 	d.multiline_text(toDraw, f"{i}", font=fnt, fill=NumColor)
 
-if __name__ == '__main__':
+def main():
 	out = Image.new("RGB", imgSize, backgroundColor)
 	centerrr = findCenter(imgSize)
 
 	d = ImageDraw.Draw(out)
 
-	cr = CustomRow()
+	cr = CustomRow(MIN, MAX) # https://oeis.org/?language=russian
 
 	for i in cr:
 		drawStar(i, d, centerrr)
 
-	out.save("out.png")
+	out.save(outFileName)
 	#out.show()
+
+def help() -> str:
+	helpstr='''
+-w - width of output picture (default 15000)
+-h - hight of output picture (default 10000)
+-o - path to the output image (default \"out.png\")
+-min - the minimum possible number in polar coordinates (default 1)
+-max - the maximum possible number in polar coordinates (default 10000)
+-scale - How many times to reduce the output image (default 10)
+-fontsize - font size (default 11)
+-help or -?- show help (this message)
+'''
+	return helpstr
+
+def printError() -> str:
+	return "Syntax error\n\n" + help()
+
+def getArg(arg : str, argv : list) -> str:
+	if(arg in argv):
+		index = sys.argv.index(arg)
+		if(index+1 >= len(argv)):
+			print(printError())
+			exit()
+		else:
+			return argv[index+1]
+	else:
+		return None
+
+if __name__ == '__main__':
+	# python number_spiralk -w -h -o -max -frontsize -scale -help
+
+	if("-help" in sys.argv or "-?" in sys.argv):
+		print(help())
+
+	arg_w = getArg("-w", sys.argv)
+	if(arg_w == None):
+		W = 15000
+	else:
+		W = int(arg_w)
+
+	arg_h = getArg("-h", sys.argv)
+	if(arg_h == None):
+		H = 10000
+	else:
+		H = int(arg_h)
+
+	imgSize = (W, H)
+
+	arg_o = getArg("-o", sys.argv)
+	if(arg_o != None):
+		outFileName = arg_o
+
+	arg_min = getArg("-min", sys.argv)
+	if(arg_min != None):
+		MIN = int(arg_min)
+
+	arg_max = getArg("-max", sys.argv)
+	if(arg_max != None):
+		MAX = int(arg_max)
+
+	arg_scale = getArg("-scale", sys.argv)
+	if(arg_scale != None):
+		scale = float(arg_scale)
+
+	arg_fontsize = getArg("-fontsize", sys.argv)
+	if(arg_fontsize != None):
+		fontSize = int(arg_fontsize)
+
+	main()
