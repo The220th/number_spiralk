@@ -58,11 +58,19 @@ def main():
 	d = ImageDraw.Draw(out)
 
 	cr = CustomRow(MIN, MAX) # https://oeis.org/?language=russian
+	dif = (MAX-MIN)//500
+	_dif = dif
+	j = 0
 
 	for i in cr:
+		if(j > dif):
+			dif += _dif
+			print(f"{'%.3f'%((100*j)/(MAX-MIN))}%")
 		drawStar(i, d, centerrr)
+		j+=1
 
 	out.save(outFileName)
+	print(f"{100}%")
 	#out.show()
 
 def help() -> str:
